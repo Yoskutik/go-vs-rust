@@ -1,0 +1,4 @@
+/data
+/results.csv
+/*/*/.idea/**/*
+/go/*/*.exe
