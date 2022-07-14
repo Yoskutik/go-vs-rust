@@ -9,7 +9,7 @@ import (
 
 func routine(millis int, ch chan<- float64) {
 	var n float64 = 0
-	for i := 0; i < 10_000; i++ {
+	for i := 0; i < 100_000; i++ {
 		if i%2 == 0 {
 			n /= float64(i)
 			n += 1.0

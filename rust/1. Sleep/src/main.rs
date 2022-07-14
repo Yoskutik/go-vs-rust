@@ -5,7 +5,7 @@ use tokio::time::sleep;
 
 async fn routine(millis: u64) -> f64 {
     let mut n: f64 = 0.;
-    for i in 1..10_000 {
+    for i in 1..100_000 {
         if i % 2 == 0 {
             n /= i as f64;
             n += 1.;

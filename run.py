@@ -1,8 +1,11 @@
-import os
 import subprocess
-import time
 import shutil
+import time
 import csv
+import sys
+import os
+
+from tqdm import tqdm
 
 
 data = {
@@ -14,6 +17,12 @@ data = {
     100000: [],
     1000000: [],
 }
+
+
+def delete_last_line():
+    sys.stdout.write('\x1b[1A')
+    sys.stdout.write('\x1b[2K')
+
 
 def test(label: str, lang: str, dir: str, update_data: bool = False):
     print(label)
@@ -30,7 +39,7 @@ def test(label: str, lang: str, dir: str, update_data: bool = False):
     for power in range(6):
         results = []
         n_routines = 10 ** (power + 1)
-        for i in range(10):
+        for i in tqdm(range(7), desc=f'{n_routines:<9,}'):
             if update_data:
                 shutil.rmtree('data', ignore_errors=True)
                 shutil.unpack_archive('data.zip', 'data')
@@ -38,8 +47,9 @@ def test(label: str, lang: str, dir: str, update_data: bool = False):
             microsecs = int(subprocess.check_output([f'./{lang}/{dir}/{prefix}coroutine.exe', str(n_routines)], shell=True))
             results.append(microsecs)
             time.sleep(microsecs / 1000000)
+        delete_last_line()
         result = min(results)
-        print(f"{n_routines:<7}: {result}")
+        print(f"{n_routines:<9,}: {result}")
         data[n_routines].append(result)
 
     print()

@@ -1,8 +1,8 @@
 use std::time::Instant;
 
+use tokio::io::AsyncWriteExt;
 use tokio::task::JoinHandle;
 use tokio::fs;
-use tokio::io::{AsyncWriteExt};
 
 async fn routine(file_index: i32) -> String {
     let path = format!("./data/{file_index}.txt");
