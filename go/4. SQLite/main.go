@@ -12,20 +12,19 @@ import (
 
 func routine(db *sql.DB, age, id int, ch chan<- string) {
 	if age%2 == 0 {
-		update, _ := db.Prepare("UPDATE users SET salary = salary + 1 WHERE id = (?)")
-		defer update.Close()
-		update.Exec(id)
+		queryUpdate := fmt.Sprintf("UPDATE users SET salary = salary + 1 WHERE id = %d", id)
+		db.Exec(queryUpdate)
 
-		get, _ := db.Prepare("SELECT salary FROM users WHERE id = (?)")
-		defer get.Close()
+		querySelect := fmt.Sprintf("SELECT salary FROM users WHERE id = %d", id)
 		var salary string
-		get.QueryRow(id).Scan(&salary)
-		ch <- salary
+		db.QueryRow(querySelect).Scan(&salary)
+		ch <- fmt.Sprintf("%d: %s", id, salary)
 	} else {
-		rows, _ := db.Query("SELECT salary FROM users WHERE age = 10 ORDER BY id")
+		query := fmt.Sprintf("SELECT salary FROM users WHERE age = %d ORDER BY id", age)
+		rows, _ := db.Query(query)
 		defer rows.Close()
 
-		salaries := []string{}
+		var salaries []string
 		for rows.Next() {
 			var salary string
 			rows.Scan(&salary)

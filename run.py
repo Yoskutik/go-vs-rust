@@ -83,13 +83,13 @@ if __name__ == '__main__':
 
     for lang in ['Rust', 'Go']:
         print(f'Benchmarking {lang}')
-        test(lang, '1. Sleep')
-        test(lang, '2. Files R', should_update_text=True)
-        test(lang, '3. Files RW', should_update_text=True, max_routines=100_000)
+        #test(lang, '1. Sleep')
+        #test(lang, '2. Files R', should_update_text=True)
+        #test(lang, '3. Files RW', should_update_text=True, max_routines=100_000)
         os.environ['DATABASE_URL'] = f'sqlite:{os.getcwd()}/database.db'
         test(lang, '4. SQLite', should_update_sqlite=True, max_routines=1_000)
-        os.environ['DATABASE_URL'] = f'mysql://root:root@localhost/database'
-        test(lang, '5. MySQL', should_update_mysql=True, max_routines=100_000)
+        #os.environ['DATABASE_URL'] = f'mysql://root:root@localhost/database'
+        #test(lang, '5. MySQL', should_update_mysql=True, max_routines=100_000)
         print()
 
     save_data(timers, 'timers')
