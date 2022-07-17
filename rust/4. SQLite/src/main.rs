@@ -48,7 +48,7 @@ async fn main() {
     let ids = lcg(n, 10_000, 17);
 
     let start = Instant::now();
-    let handles: Vec<JoinHandle<_>> = (1..n).map(|i| {
+    let handles: Vec<JoinHandle<_>> = (0..n).map(|i| {
         let pool = pool.clone();
         let age = ages[i];
         let id = ids[i];

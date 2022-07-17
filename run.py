@@ -54,7 +54,7 @@ def test(
             timers[n_routines].append(-1)
             memory[n_routines].append(-1)
             continue
-        for i in tqdm(range(3), desc=f'{n_routines:<9,}'):
+        for i in tqdm(range(5), desc=f'{n_routines:<9,}'):
             if should_update_text:
                 update_text_data()
             if should_update_sqlite:

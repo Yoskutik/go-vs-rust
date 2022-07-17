@@ -7,5 +7,7 @@
 /migrate.sql
 /init-database.db
 /database.db
+/database.db-shm
+/database.db-wal
 /init-text-data
 /__pycache__
