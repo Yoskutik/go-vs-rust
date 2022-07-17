@@ -1,4 +1,11 @@
 /data
+/.idea
 /results.csv
 /*/*/.idea/**/*
 /go/*/*.exe
+/venv
+/migrate.sql
+/init-database.db
+/database.db
+/init-text-data
+/__pycache__
