@@ -43,9 +43,11 @@ async fn main() {
         tokio::spawn(routine(*i))
     }).collect();
 
+    let mut list = Vec::with_capacity(n);
     for handle in handles {
-        handle.await.unwrap();
+        list.push(handle.await.unwrap());
     }
+    _ = list.len();
 
     println!("{:?}", start.elapsed().as_micros());
 }

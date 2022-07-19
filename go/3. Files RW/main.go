@@ -11,11 +11,18 @@ func routine(fileIndex int, ch chan<- string) {
 	path := fmt.Sprintf("./data/%d.txt", fileIndex)
 
 	if fileIndex%2 == 0 {
-		file, _ := os.OpenFile(path, os.O_APPEND, 0666)
+		file, err := os.OpenFile(path, os.O_APPEND, 0666)
+		if err != nil {
+			panic(err)
+		}
 		file.WriteString("Appended string\n")
 	}
 
-	file, _ := os.ReadFile(path)
+	file, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
 	ch <- string(file)
 }
 
@@ -36,18 +43,25 @@ func lcg(n, maxValue int) []int {
 }
 
 func main() {
-	n, _ := strconv.Atoi(os.Args[1])
+	n, err := strconv.Atoi(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
 
 	indices := lcg(n, 20)
 	ch := make(chan string)
-	list := make([]string, n)
 
 	start := time.Now()
 	for i := 0; i < n; i++ {
 		go routine(indices[i], ch)
 	}
+
+	list := make([]string, n)
 	for i := 0; i < n; i++ {
 		list[i] = <-ch
 	}
+
+	_ = len(list)
+
 	fmt.Println(time.Since(start).Microseconds())
 }

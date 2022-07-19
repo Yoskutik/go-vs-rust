@@ -9,7 +9,11 @@ import (
 
 func routine(fileIndex int, ch chan<- string) {
 	path := fmt.Sprintf("./data/%d.txt", fileIndex)
-	file, _ := os.ReadFile(path)
+	file, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
 	ch <- string(file)
 }
 
@@ -30,18 +34,25 @@ func lcg(n, maxValue int) []int {
 }
 
 func main() {
-	n, _ := strconv.Atoi(os.Args[1])
+	n, err := strconv.Atoi(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
 
 	indices := lcg(n, 20)
 	ch := make(chan string)
-	list := make([]string, n)
 
 	start := time.Now()
 	for i := 0; i < n; i++ {
 		go routine(indices[i], ch)
 	}
+
+	list := make([]string, n)
 	for i := 0; i < n; i++ {
 		list[i] = <-ch
 	}
+
+	_ = len(list)
+
 	fmt.Println(time.Since(start).Microseconds())
 }

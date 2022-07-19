@@ -26,8 +26,6 @@ fn lcg(n: usize, max_value: i128) -> Vec<i32> {
 
 #[tokio::main]
 async fn main() {
-    tokio::spawn(routine(1)).await.unwrap();
-
     let n = std::env::args().nth(1).unwrap().parse().unwrap();
     let generated = lcg(n, 20);
     let indices = generated.iter();
@@ -38,9 +36,11 @@ async fn main() {
         tokio::spawn(routine(*i))
     }).collect();
 
+    let mut list = Vec::with_capacity(n);
     for handle in handles {
-        handle.await.unwrap();
+        list.push(handle.await.unwrap());
     }
+    _ = list.len();
 
     println!("{:?}", start.elapsed().as_micros());
 }

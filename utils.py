@@ -81,3 +81,10 @@ def save_data(data, name: str):
         for power in range(6):
             n_routines = 10 ** (power + 1)
             writer.writerow([n_routines] + data[n_routines])
+
+
+def cleanup():
+    shutil.rmtree('data', ignore_errors=True)
+    shutil.rmtree('init-text-data', ignore_errors=True)
+    for x in ['database.db', 'database.db-shm', 'database.db-wal', 'init-database.db']:
+        Path(x).unlink(missing_ok=True)

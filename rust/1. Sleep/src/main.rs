@@ -35,22 +35,21 @@ fn lcg(n: usize, max_value: i128) -> Vec<i32> {
 
 #[tokio::main]
 async fn main() {
-    tokio::spawn(routine(1)).await.unwrap();
-
     let n = std::env::args().nth(1).unwrap().parse().unwrap();
     let generated = lcg(n, 300);
     let timers = generated.iter();
 
-    tokio::spawn(routine(0)).await.unwrap();
     let start = Instant::now();
 
     let handles: Vec<JoinHandle<_>> = timers.map(|i| {
         tokio::spawn(routine(*i as u64))
     }).collect();
 
+    let mut list = Vec::with_capacity(n);
     for handle in handles {
-        handle.await.unwrap();
+        list.push(handle.await.unwrap());
     }
+    _ = list.len();
 
     println!("{:?}", start.elapsed().as_micros());
 }

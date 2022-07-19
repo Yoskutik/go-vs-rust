@@ -21,7 +21,10 @@ func routine(db *sql.DB, age, id int, ch chan<- string) {
 		ch <- fmt.Sprintf("%d: %s", id, salary)
 	} else {
 		query := fmt.Sprintf("SELECT salary FROM users WHERE age = %d ORDER BY id", age)
-		rows, _ := db.Query(query)
+		rows, err := db.Query(query)
+		if err != nil {
+			panic(err)
+		}
 		defer rows.Close()
 
 		var salaries []string
@@ -52,22 +55,32 @@ func lcg(n, maxValue, seed int) []int {
 }
 
 func main() {
-	n, _ := strconv.Atoi(os.Args[1])
+	n, err := strconv.Atoi(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
 
 	ages := lcg(n, 100, 42)
 	ids := lcg(n, 10_000, 42)
 	ch := make(chan string)
-	list := make([]string, n)
 
-	db, _ := sql.Open("sqlite3", "database.db")
+	db, err := sql.Open("sqlite3", "database.db")
+	if err != nil {
+		panic(err)
+	}
 	defer db.Close()
 
 	start := time.Now()
 	for i := 0; i < n; i++ {
 		go routine(db, ages[i], ids[i], ch)
 	}
+
+	list := make([]string, n)
 	for i := 0; i < n; i++ {
 		list[i] = <-ch
 	}
+
+	_ = len(list)
+
 	fmt.Println(time.Since(start).Microseconds())
 }

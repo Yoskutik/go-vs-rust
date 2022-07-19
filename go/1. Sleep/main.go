@@ -38,18 +38,25 @@ func lcg(n, maxValue int) []int {
 }
 
 func main() {
-	n, _ := strconv.Atoi(os.Args[1])
+	n, err := strconv.Atoi(os.Args[1])
+	if err != nil {
+		panic(err)
+	}
 
 	timers := lcg(n, 300)
 	ch := make(chan float64)
-	list := make([]float64, n)
 
 	start := time.Now()
 	for i := 0; i < n; i++ {
 		go routine(timers[i], ch)
 	}
+
+	list := make([]float64, n)
 	for i := 0; i < n; i++ {
 		list[i] = <-ch
 	}
+
+	_ = len(list)
+
 	fmt.Println(time.Since(start).Microseconds())
 }

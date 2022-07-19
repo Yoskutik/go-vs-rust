@@ -1,28 +1,27 @@
+use std::error::Error;
 use std::time::{Duration, Instant};
 use tokio::task::JoinHandle;
 use sqlx::mysql::MySqlPool;
 use sqlx::mysql::MySqlPoolOptions;
 
-async fn routine(pool: &MySqlPool, age: i32, id: i32) -> String {
+async fn routine(pool: &MySqlPool, age: i32, id: i32) -> Result<String, Box<dyn Error>> {
     if age % 2 == 0 {
         sqlx::query!("UPDATE users SET salary = salary + 1 WHERE id = ( ? )", id)
             .execute(pool)
-            .await
-            .unwrap();
+            .await?;
         let row = sqlx::query!("SELECT salary FROM users WHERE id = ( ? )", id)
             .fetch_one(pool)
-            .await
-            .unwrap();
-        format!("{}: {}", id, row.salary)
+            .await?;
+        Ok(format!("{}: {}", id, row.salary))
     } else {
-        sqlx::query!("SELECT salary FROM users WHERE age = ( ? ) ORDER BY id", age)
+		let res = sqlx::query!("SELECT salary FROM users WHERE age = ( ? ) ORDER BY id", age)
             .fetch_all(pool)
-            .await
-            .unwrap()
+            .await?
             .iter()
             .map(|it| it.salary.to_string())
             .collect::<Vec<String>>()
-            .join(", ")
+            .join(", ");
+		Ok(res)
     }
 }
 
@@ -60,13 +59,15 @@ async fn main() {
         let age = ages[i];
         let id = ids[i];
         tokio::spawn(async move {
-            routine(&pool, age, id).await
+            routine(&pool, age, id).await.unwrap()
         })
     }).collect();
 
+    let mut list = Vec::with_capacity(n);
     for handle in handles {
-        handle.await.unwrap();
+        list.push(handle.await.unwrap());
     }
+    _ = list.len();
 
     println!("{:?}", start.elapsed().as_micros());
 }
