@@ -62,7 +62,6 @@ func main() {
 
 	ages := lcg(n, 100, 42)
 	ids := lcg(n, 10_000, 17)
-	ch := make(chan string)
 
 	db, err := sql.Open("mysql", "root:root@/database")
 	if err != nil {
@@ -73,13 +72,16 @@ func main() {
 	defer db.Close()
 
 	start := time.Now()
+	var chs []chan string
 	for i := 0; i < n; i++ {
+		ch := make(chan string, 1)
+		chs = append(chs, ch)
 		go routine(db, ages[i], ids[i], ch)
 	}
 
 	list := make([]string, n)
 	for i := 0; i < n; i++ {
-		list[i] = <-ch
+		list[i] = <-chs[i]
 	}
 
 	_ = len(list)

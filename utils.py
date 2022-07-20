@@ -86,5 +86,45 @@ def save_data(data, name: str):
 def cleanup():
     shutil.rmtree('data', ignore_errors=True)
     shutil.rmtree('init-text-data', ignore_errors=True)
-    for x in ['database.db', 'database.db-shm', 'database.db-wal', 'init-database.db']:
+    for x in ['database.db', 'database.db-shm', 'database.db-wal', 'init-database.db', 'migrate.sql']:
         Path(x).unlink(missing_ok=True)
+
+
+def print_result(timers, memory, test_name):
+    try:
+        rust_index = timers["labels"].index(f'Rust: {test_name}')
+        go_index = timers["labels"].index(f'Go: {test_name}')
+    except ValueError:
+        return
+    
+    def get_item(index, n_routines):
+        secs = timers[n_routines][index]
+        secs_text = f'{(secs / 1_000_000):,.3f}s'
+        mem = memory[n_routines][index]
+        mem_text = f'{(mem / 1024):.2f}Gb' if mem > 1000 else f'{mem:.2f}Mb'
+        return f'| {secs_text:<7} | {mem_text:<8} '
+
+    def get_diff(n_routines):
+        time_diff = timers[n_routines][rust_index] / timers[n_routines][go_index] * 100 - 100
+        time_diff = f'{"+" if time_diff > 0 else ""}{time_diff:.1f}%'
+        mem_diff = memory[n_routines][rust_index] / memory[n_routines][go_index] * 100 - 100
+        mem_diff = f'{"+" if mem_diff > 0 else ""}{mem_diff:.1f}%'
+        return f'| {time_diff:<7} | {mem_diff:<7} |'
+
+    print(f'{test_name} results:')
+    print('+' + '-' * 11 + '+' + '-' * 20 + '+' + '-' * 20 + '+' + '-' * 19 + '+')
+    print('| amount    ' + '|' + ' Rust' + ' ' * 15 + '|' + ' Go' + ' ' * 17 + '| Diff' + ' ' * 14 + '|')
+    print('+' + '-' * 11 + '+' + '-' * 9 + '+' + '-' * 10 + '+' + '-' * 9 + '+' + '-' * 10 + '+' + '-' * 9 + '+' + '-' * 9 + '+')
+        
+    for x in range(6):
+        n_routines = 10 ** (x + 1)
+        if times[n_routines][go_index] == -1:
+            break
+        print(f'| {n_routines:<9,} {get_item(rust_index, n_routines)}{get_item(go_index, n_routines)}{get_diff(n_routines)}')
+    print('+' + '-' * 11 + '+' + '-' * 9 + '+' + '-' * 10 + '+' + '-' * 9 + '+' + '-' * 10 + '+' + '-' * 9 + '+' + '-' * 9 + '+')
+    print()
+
+
+def print_results(timers, memory):
+    for x in ['1. Sleep', '2. Files R', '3. Files RW', '4. SQLite', '5. MySQL']:
+        print_result(timers, memory, x)

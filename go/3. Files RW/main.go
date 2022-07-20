@@ -49,16 +49,18 @@ func main() {
 	}
 
 	indices := lcg(n, 20)
-	ch := make(chan string)
 
 	start := time.Now()
+	var chs []chan string
 	for i := 0; i < n; i++ {
+		ch := make(chan string, 1)
+		chs = append(chs, ch)
 		go routine(indices[i], ch)
 	}
 
 	list := make([]string, n)
 	for i := 0; i < n; i++ {
-		list[i] = <-ch
+		list[i] = <-chs[i]
 	}
 
 	_ = len(list)

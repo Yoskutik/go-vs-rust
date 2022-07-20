@@ -44,16 +44,18 @@ func main() {
 	}
 
 	timers := lcg(n, 300)
-	ch := make(chan float64)
 
 	start := time.Now()
+	var chs []chan float64
 	for i := 0; i < n; i++ {
+		ch := make(chan float64, 1)
+		chs = append(chs, ch)
 		go routine(timers[i], ch)
 	}
 
 	list := make([]float64, n)
 	for i := 0; i < n; i++ {
-		list[i] = <-ch
+		list[i] = <-chs[i]
 	}
 
 	_ = len(list)
