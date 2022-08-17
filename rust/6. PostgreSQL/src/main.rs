@@ -1,18 +1,18 @@
 use std::time::{Duration, Instant};
 use tokio::task::JoinHandle;
-use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
+use sqlx::postgres::{PgPool, PgPoolOptions};
 
-async fn routine(pool: &MySqlPool, age: i32, id: i32) -> Result<String, sqlx::Error> {
+async fn routine(pool: &PgPool, age: i32, id: i32) -> Result<String, sqlx::Error> {
     if age % 2 == 0 {
-        sqlx::query!("UPDATE users SET salary = salary + 1 WHERE id = ( ? )", id)
+        sqlx::query!("UPDATE users SET salary = salary + 1 WHERE id = ( $1 )", id)
             .execute(pool)
             .await?;
-        let row = sqlx::query!("SELECT salary FROM users WHERE id = ( ? )", id)
+        let row = sqlx::query!("SELECT salary FROM users WHERE id = ( $1 )", id)
             .fetch_one(pool)
             .await?;
         Ok(format!("{}: {}", id, row.salary))
     } else {
-		let res = sqlx::query!("SELECT salary FROM users WHERE age = ( ? ) ORDER BY id", age)
+		let res = sqlx::query!("SELECT salary FROM users WHERE age = ( $1 ) ORDER BY id", age)
             .fetch_all(pool)
             .await?
             .iter()
@@ -42,8 +42,8 @@ fn lcg(n: usize, max_value: i128, seed: i128) -> Vec<i32> {
 #[tokio::main]
 async fn main() {
     let n = std::env::args().nth(1).unwrap().parse().unwrap();
-    let pool = MySqlPoolOptions::new()
-		.max_connections(151)
+    let pool = PgPoolOptions::new()
+        .max_connections(100)
         .acquire_timeout(Duration::from_secs(600))
         .connect(&std::env::var("DATABASE_URL").unwrap())
         .await

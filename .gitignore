@@ -4,7 +4,7 @@
 /*/*/.idea/**/*
 /go/*/*.exe
 /venv
-/migrate.sql
+*.sql
 /init-database.db
 /database.db
 /database.db-shm

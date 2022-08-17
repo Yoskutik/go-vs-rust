@@ -7,15 +7,19 @@ import (
 	"time"
 )
 
+var mu *M
+
 func routine(fileIndex int, ch chan<- string) {
 	path := fmt.Sprintf("./data/%d.txt", fileIndex)
 
 	if fileIndex%2 == 0 {
+		unlocker := mu.Lock(fileIndex)
 		file, err := os.OpenFile(path, os.O_APPEND, 0666)
 		if err != nil {
 			panic(err)
 		}
 		file.WriteString("Appended string\n")
+		unlocker.Unlock()
 	}
 
 	file, err := os.ReadFile(path)
@@ -49,6 +53,7 @@ func main() {
 	}
 
 	indices := lcg(n, 20)
+	mu = New()
 
 	start := time.Now()
 	var chs []chan string

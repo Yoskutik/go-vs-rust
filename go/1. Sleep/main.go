@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"time"
@@ -9,13 +10,11 @@ import (
 
 func routine(millis int, ch chan<- float64) {
 	var n float64 = 0
-	for i := 0; i < 100_000; i++ {
-		if i%2 == 0 {
-			n /= float64(i)
-			n += 1.0
-		} else {
-			n *= float64(i)
+	for i := 0; i < 50_000; i++ {
+		if n > 1000 {
+			n /= 850
 		}
+		n *= 4
 	}
 	time.Sleep(time.Duration(millis) * time.Millisecond)
 	ch <- n

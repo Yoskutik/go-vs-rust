@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"os"
 	"strconv"
 	"strings"
@@ -63,11 +63,11 @@ func main() {
 	ages := lcg(n, 100, 42)
 	ids := lcg(n, 10_000, 17)
 
-	db, err := sql.Open("mysql", "root:root@/db")
+	db, err := sql.Open("postgres", "postgresql://root:root@localhost/db?sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
-	db.SetMaxOpenConns(151)
+	db.SetMaxOpenConns(100)
 	db.SetConnMaxLifetime(time.Second * 600)
 	defer db.Close()
 

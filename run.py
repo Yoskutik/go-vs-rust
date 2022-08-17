@@ -1,85 +1,79 @@
+import logging
+import sys
+from datetime import datetime
 from tqdm import tqdm
-from ProcessMaker import ProcessMaker
 from utils import *
+from data import data, idx_to_name, save_data
 
 
-timers = {
-    "labels": [],
-    10: [],
-    100: [],
-    1_000: [],
-    10_000: [],
-    100_000: [],
-    1_000_000: [],
-}
+shutil.rmtree(f'results', ignore_errors=True)
+os.mkdir(f'results')
 
-memory = {
-    "labels": [],
-    10: [],
-    100: [],
-    1_000: [],
-    10_000: [],
-    100_000: [],
-    1_000_000: [],
-}
+logger = logging.getLogger()
+logger.addHandler(logging.FileHandler('results/output.log', mode='w'))
+logger.addHandler(logging.StreamHandler(sys.stdout))
+logger.setLevel(logging.INFO)
 
 
-def test(lang: str,folder: str, /, update_fn = None, max_routines: int = None):
-    print(f'Test {folder}')
-    timers["labels"].append(f'{lang}: {folder}')
-    memory["labels"].append(f'{lang}: {folder}')
+UPDATE_FNS = [
+    None,
+    update_text_data,
+    update_text_data,
+    update_sqlite,
+    update_mysql,
+    update_postgresql,
+]
 
-    lang = lang.lower()
-    os.chdir(f'./{lang}/{folder}')
-    if lang == 'rust':
+
+def test(lang: str, idx: int, max_routines: int = None):
+    folder = idx_to_name(idx)
+    logger.info(f'Test {folder}')
+
+    os.chdir(f'./{lang.lower()}/{folder}')
+    if lang == 'Rust':
         subprocess.run('cargo build -qr', shell=True)
     else:
         subprocess.run('go build .', shell=True)
     os.chdir('../../')
+    logger.info('Build done.')
     
     for power in range(6):
-        results = []
-        mems = []
+        durations = []
+        memories = []
         n_routines = 10 ** (power + 1)
         if max_routines and n_routines > max_routines:
-            timers[n_routines].append(-1)
-            memory[n_routines].append(-1)
             continue
-        for i in tqdm(range(8), desc=f'{n_routines:<9,}'):
-            if update_fn is not None:
-                update_fn()
-            process = ProcessMaker(lang, folder, n_routines)
-            results.append(process.result)
-            mems.append(process.memory)
-            time.sleep(process.result / 1_000_000)
+        for i in tqdm(range(9 - power), desc=f'{n_routines:<9,}'):
+            if UPDATE_FNS[idx]:
+                UPDATE_FNS[idx]()
+            try:
+                duration, mem = get_process_info(lang.lower(), folder, n_routines)
+                time.sleep(duration / 1_000_000)
+            except ValueError:
+                duration, mem = sys.maxsize, -1
+            durations.append(duration)
+            memories.append(mem)
         delete_last_line()
-        result = min(results)
-        secs = f'{(result / 1_000_000):,.3f}s'
-        print(f"{n_routines:<9,}: {secs:<10}{max(mems):,.2f}Mb")
-        timers[n_routines].append(result)
-        memory[n_routines].append(max(mems))
+        duration = min(durations)
+        logger.info(f"{n_routines:<9,}: {(duration / 1_000_000):<8,.2f}{max(memories):,.2f}")
+        data['duration'][idx].loc[n_routines, lang] = duration
+        data['memory'][idx].loc[n_routines, lang] = max(memories)
 
-    print()
+    logger.info('')
 
 
 if __name__ == '__main__':
-    print('Preparing test data...')
-    prepare_text_data()
-    prepare_databases()
-    print()
+    now = datetime.now()
+    startup()
 
     for lang in ['Go', 'Rust']:
-        print(f'Benchmarking {lang}')
-        test(lang, '1. Sleep')
-        test(lang, '2. Files R', update_fn=update_text_data)
-        test(lang, '3. Files RW', update_fn=update_text_data, max_routines=100_000)
-        os.environ['DATABASE_URL'] = f'sqlite:{os.getcwd()}/database.db'
-        test(lang, '4. SQLite', update_fn=update_sqlite, max_routines=1_000)
-        os.environ['DATABASE_URL'] = 'mysql://root:root@localhost/database'
-        test(lang, '5. MySQL', update_fn=update_mysql, max_routines=100_000)
-        print()
+        logger.info(f'Benchmarking {lang}')
+        for x in range(6):
+            test(lang, x, 1_000 if x == 3 else None)
+        logger.info('')
 
-    save_data(timers, 'timers')
-    save_data(memory, 'memory')
-    print_results(timers, memory)
+    save_data()
+    print_results()
     cleanup()
+
+    logger.info(f'Total time elapsed: {datetime.now() - now}')

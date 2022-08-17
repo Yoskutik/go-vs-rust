@@ -1,0 +1,8 @@
+tqdm
+mysql
+mysql-connector-python
+psycopg2
+psutil
+pandas
+matplotlib>=3.5
+py-cpuinfo

@@ -1,17 +1,14 @@
 use std::time::{Duration, Instant};
-
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
 async fn routine(millis: u64) -> f64 {
     let mut n: f64 = 0.;
-    for i in 1..100_000 {
-        if i % 2 == 0 {
-            n /= i as f64;
-            n += 1.;
-        } else {
-            n *= i as f64;
+    for i in 1..50_000 {
+        if n > 1000. {
+            n /= 850.;
         }
+        n *= 4.;
     }
     sleep(Duration::from_millis(millis)).await;
     n
