@@ -57,7 +57,7 @@ def _prepare_sqlite(create_query: str, insert_query: str, data) -> None:
     Path('init-database.db').unlink(missing_ok=True)
     db = sqlite3.connect('init-database.db')
     _prepare_any_db(db, create_query, insert_query, data)
-    
+
 
 @log_wrap('MySQL')
 def _prepare_mysql(create_query: str, insert_query: str, data) -> None:
@@ -66,19 +66,19 @@ def _prepare_mysql(create_query: str, insert_query: str, data) -> None:
         host="localhost",
         user="root",
         password="root",
-        database="database"
+        database="db"
     )
     _prepare_any_db(db, create_query, insert_query, data)
-    subprocess.run('mysqldump -u root database > migrate_mysql.sql', shell=True)
+    subprocess.run('mysqldump -u root db > migrate_mysql.sql', shell=True)
 
 
 @log_wrap('PostgreSQL')
 def _prepare_postgresql(create_query: str, insert_query: str, data) -> None:
     os.environ['PGPASSWORD'] = 'root'
-    db = psycopg2.connect(dbname='postgres', user='postgres', password='1', host='localhost')
+    db = psycopg2.connect(dbname='postgres', user='postgres', password='root', host='localhost')
     _prepare_any_db(db, create_query, insert_query, data)
-    subprocess.run('pg_dump -U postgres --clean > migrate_postgresql.sql', shell=True)
-    
+    subprocess.run('pg_dump -U postgres -h localhost --clean > migrate_postgresql.sql', shell=True)
+
 
 @log_wrap('databases', True)
 def _prepare_databases() -> None:
@@ -116,17 +116,14 @@ def update_sqlite() -> None:
     for x in ['database.db', 'database.db-shm', 'database.db-wal']:
         Path(x).unlink(missing_ok=True)
     shutil.copy('init-database.db', 'database.db')
-    os.environ['DATABASE_URL'] = f'sqlite:{os.getcwd()}/database.db'
 
 
 def update_mysql() -> None:
-    subprocess.run('mysql -u root database < migrate_mysql.sql', shell=True)
-    os.environ['DATABASE_URL'] = 'mysql://root:root@localhost/db'
+    subprocess.run('mysql -u root db < migrate_mysql.sql', shell=True)
 
 
 def update_postgresql() -> None:
-    subprocess.run('psql -U postgres < migrate_postgresql.sql', shell=True, stdout=subprocess.DEVNULL)
-    os.environ['DATABASE_URL'] = 'postgres://root:root@localhost/db'
+    subprocess.run('psql -U postgres -h localhost < migrate_postgresql.sql', shell=True, stdout=subprocess.DEVNULL)
 
 
 def cleanup() -> None:

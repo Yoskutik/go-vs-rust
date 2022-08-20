@@ -63,7 +63,7 @@ func main() {
 	ages := lcg(n, 100, 42)
 	ids := lcg(n, 10_000, 17)
 
-	db, err := sql.Open("postgres", "postgresql://root:root@localhost/db?sslmode=disable")
+	db, err := sql.Open("postgres", "postgresql://postgres:root@localhost/postgres?sslmode=disable")
 	if err != nil {
 		panic(err)
 	}

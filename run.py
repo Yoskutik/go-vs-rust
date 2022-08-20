@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import logging
 import sys
 from datetime import datetime
@@ -36,11 +38,11 @@ def test(lang: str, idx: int, max_routines: int = None):
         subprocess.run('go build .', shell=True)
     os.chdir('../../')
     logger.info('Build done.')
-    
+
     for power in range(6):
         durations = []
         memories = []
-        n_routines = 10 ** (power + 1)
+        n_routines = 10 ** power
         if max_routines and n_routines > max_routines:
             continue
         for i in tqdm(range(9 - power), desc=f'{n_routines:<9,}'):
@@ -68,8 +70,15 @@ if __name__ == '__main__':
 
     for lang in ['Go', 'Rust']:
         logger.info(f'Benchmarking {lang}')
-        for x in range(6):
-            test(lang, x, 1_000 if x == 3 else None)
+        test(lang, 0)
+        test(lang, 1)
+        test(lang, 2, 100_000)
+        os.environ['DATABASE_URL'] = f'sqlite:{os.getcwd()}/database.db'
+        test(lang, 3, 1000)
+        os.environ['DATABASE_URL'] = 'mysql://root:root@localhost/db'
+        test(lang, 4)
+        os.environ['DATABASE_URL'] = 'postgres://postgres:root@localhost/postgres'
+        test(lang, 5)
         logger.info('')
 
     save_data()

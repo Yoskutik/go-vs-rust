@@ -44,7 +44,7 @@ def _print_result(idx: int) -> None:
     logger.info(f'{p(11)}{p(20)}{p(20)}{p(19)}+')
     logger.info('| routines  ' + '|' + ' Rust' + ' ' * 15 + '|' + ' Go' + ' ' * 17 + '| Ratio' + ' ' * 13 + '|')
     logger.info(f'{p(11)}{p(9)}{p(10)}{p(9)}{p(10)}{p(9)}{p(9)}+')
-        
+
     for x in range(6):
         n_routines = 10 ** (x + 1)
         if pd.isna(data['duration'][idx].loc[n_routines, 'Go']):
@@ -78,7 +78,8 @@ def startup():
 
     logger = logging.getLogger()
     logger.info('System info:')
-    logger.info(f'CPU: {cpuinfo.get_cpu_info()["brand_raw"]}, {os.cpu_count()} pc.')
+    info = cpuinfo.get_cpu_info()
+    logger.info(f'CPU: {info["brand_raw"]}, {os.cpu_count()} cores x {info["hz_advertised_friendly"]}')
     logger.info(f'RAM: {(psutil.virtual_memory().total / 1024 / 1024 / 1024):.2f}GiB')
     uname = platform.uname()
     logger.info(f'OS: {uname.system}, v. {uname.version}, {uname.machine}')
@@ -88,11 +89,9 @@ def startup():
 
 def get_process_info(lang: str, folder: str, n_routines: int):
     prefix = 'target/release/' if lang == 'rust' else ''
-    process = subprocess.Popen(
-        [f'./{lang}/{folder}/{prefix}coroutine.exe', str(n_routines)],
-        stdout=subprocess.PIPE,
-        shell=True,
-    )
+    cmd = [f'{lang}/{folder}/{prefix}coroutine.exe', str(n_routines)] if os.name == 'nt' \
+        else f'"{lang}/{folder}/{prefix}coroutine" {n_routines}'
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 
     memory = 0
     try:
@@ -102,11 +101,11 @@ def get_process_info(lang: str, folder: str, n_routines: int):
             except psutil.NoSuchProcess:
                 usage = 0
             memory = max(memory, usage)
-            time.sleep(.1)
+            time.sleep(0.001)
     except KeyboardInterrupt:
         os.kill(process.pid, signal.SIGTERM)
-    
+
     result = int(process.communicate()[0])
-    memory /= 1024 * 1024
-    
+    memory = memory / 1_000_000 if memory > 0 else pd.NA
+
     return result, memory
